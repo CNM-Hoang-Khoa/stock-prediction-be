@@ -4,7 +4,7 @@ from binance.client import Client
 from binance.enums import *
 from datetime import datetime
 from flask_cors import CORS, cross_origin
-import get_data, stock_pred_lstm, stock_pred_xgboost
+import get_data, stock_pred_lstm_rnn, stock_pred_xgboost
 app = Flask(__name__)
 cors = CORS(app)
 app.secret_key = b'somelongrandomstring'
@@ -44,11 +44,11 @@ def history():
 def predict():
     type = request.args.get("type")
     print(type)
-    if type == config.PREDICTION_TYPES.LSTM:
-        print("RUN LSTM")
-        return_value = stock_pred_lstm.predict(isWroteTempData)
+    if type == config.PREDICTION_TYPES.LSTM or type == config.PREDICTION_TYPES.RNN:
+        print("Run predict with", type,"type")
+        return_value = stock_pred_lstm_rnn.predict(isWroteTempData, type)
     elif type == config.PREDICTION_TYPES.XGBoost:
-        print("RUN XGBoost")
+        print("Run predict with XGBoost type")
         return_value = stock_pred_xgboost.predict(isWroteTempData)
     return jsonify(return_value.to_json())
     
@@ -73,7 +73,7 @@ def update():
     get_data.write_data(processed_candlesticks, isWroteTempData)
     if type == config.PREDICTION_TYPES.LSTM:
         print("RUN LSTM")
-        return_value = stock_pred_lstm.predict(isWroteTempData)
+        return_value = stock_pred_lstm_rnn.predict(isWroteTempData)
     elif type == config.PREDICTION_TYPES.XGBoost:
         print("RUN XGBoost")
         return_value = stock_pred_xgboost.predict(isWroteTempData)

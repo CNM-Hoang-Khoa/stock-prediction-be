@@ -13,7 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 scaler=MinMaxScaler(feature_range=(0,1))
 
 
-def predict(isWroteTempData):
+def predict(isWroteTempData, model):
 
     df=pd.read_csv("./data/processed_3minutes.csv")
 
@@ -33,11 +33,10 @@ def predict(isWroteTempData):
 
     df.head()
     df["Date"]=[datetime.fromtimestamp(x) for x in df["Date"]]
-    # print(df["Date"])
     df.index=df['Date']
 
-    from keras.models import Sequential, load_model, model_from_json
-    from keras.layers import LSTM,Dropout,Dense
+    from keras.models import Sequential
+    from keras.layers import LSTM,Dense,SimpleRNN
 
     data=df.sort_index(ascending=True,axis=0)
     new_dataset=pd.DataFrame(index=range(0,len(df)),columns=['Date','Close'])
@@ -68,13 +67,18 @@ def predict(isWroteTempData):
 
     x_train_data=np.reshape(x_train_data,(x_train_data.shape[0],x_train_data.shape[1],1))
 
-    lstm_model=Sequential()
-    lstm_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
-    lstm_model.add(LSTM(units=50))
-    lstm_model.add(Dense(1))
+    pred_model=Sequential()
 
-    lstm_model.compile(loss='mean_squared_error',optimizer='adam')
-    lstm_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
+    if model == config.PREDICTION_TYPES.LSTM:
+        pred_model.add(LSTM(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        pred_model.add(LSTM(units=50))
+    elif model == config.PREDICTION_TYPES.RNN:
+        pred_model.add(SimpleRNN(units=50,return_sequences=True,input_shape=(x_train_data.shape[1],1)))
+        pred_model.add(SimpleRNN(units=50))
+    pred_model.add(Dense(1))
+
+    pred_model.compile(loss='mean_squared_error',optimizer='adam')
+    pred_model.fit(x_train_data,y_train_data,epochs=1,batch_size=1,verbose=2)
 
     inputs_data=new_dataset[len(new_dataset)-len(valid_data)-60:].values
     inputs_data=inputs_data.reshape(-1,1)
@@ -87,10 +91,8 @@ def predict(isWroteTempData):
     X_test=np.array(X_test)
 
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
-    predicted_closing_price=lstm_model.predict(X_test)
+    predicted_closing_price=pred_model.predict(X_test)
     predicted_closing_price=scaler.inverse_transform(predicted_closing_price)
-
-    lstm_model.save("saved_lstm_model_new.h5")
 
     train_data=new_dataset[:config.AMOUNT_OF_DATA]
     valid_data=new_dataset[config.AMOUNT_OF_DATA:]
@@ -100,7 +102,4 @@ def predict(isWroteTempData):
         new_valid_data["Date"][i]=(data["Date"][i + config.AMOUNT_OF_DATA] - timedelta(hours=7)).timestamp()
         new_valid_data["Predictions"][i]=valid_data["Predictions"][i]
     
-    # print(new_valid_data)
-    # test_value = new_valid_data.tail(config.TIME_PREDICTION_NEXT)
-    # print(test_value)
     return new_valid_data

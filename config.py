@@ -8,3 +8,4 @@ TIME_PREDICTION_NEXT = 1
 class PREDICTION_TYPES:
   XGBoost = "XGBoost"
   LSTM = "LSTM"
+  RNN = "RNN"

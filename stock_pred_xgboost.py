@@ -30,7 +30,6 @@ def predict(isWroteTempData):
 
     df.head()
     df["Date"]=[datetime.fromtimestamp(x) for x in df["Date"]]
-    # print(df["Date"])
     df.index=df['Date']
 
     data=df.sort_index(ascending=True,axis=0)
@@ -71,7 +70,6 @@ def predict(isWroteTempData):
     model.fit(x_train_data,y_train_data)
     predicted_closing_price=model.predict(X_test)
     predicted_closing_price=scaler.inverse_transform(predicted_closing_price.reshape(1,-1))
-    print(predicted_closing_price[0])
     predicted_closing_price = predicted_closing_price[0]
     new_valid_data=pd.DataFrame(index=range(0,len(predicted_closing_price)),columns=['Date','Predictions'])
     for i in range(0,len(valid_data)):

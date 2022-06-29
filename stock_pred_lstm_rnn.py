@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-# %matplotlib inline
-import csv, config
+import config
 
 from regex import D
 from datetime import datetime, timedelta
@@ -13,26 +11,17 @@ from sklearn.preprocessing import MinMaxScaler
 scaler=MinMaxScaler(feature_range=(0,1))
 
 
-def predict(isWroteTempData, model):
+def predict(model):
 
     df=pd.read_csv("./data/processed_3minutes.csv")
-
-    if isWroteTempData[0] == False:
-        f = open("./data/processed_3minutes.csv", 'a', newline='')
-        writer = csv.writer(f)
-        data_length = len(df)
-        for i in range(0, config.TIME_PREDICTION_NEXT):
-            writer.writerow([
-                df["Date"][data_length + i - 1] + 60 * config.INTERVAL_TIME,
-                df["Close"][data_length + i - 1]
-        ])
-
-        f.close()
-        isWroteTempData[0] = True
-        df=pd.read_csv("./data/processed_3minutes.csv")
+    for i in range(0, config.TIME_PREDICTION_NEXT):
+        newRow = {"Date":df["Date"][len(df)-1]+ 60 * config.INTERVAL_TIME, "Close":df["Close"][len(df)-1]}
+        df = df.append(newRow, ignore_index = True)
 
     df.head()
+    
     df["Date"]=[datetime.fromtimestamp(x) for x in df["Date"]]
+   
     df.index=df['Date']
 
     from keras.models import Sequential
@@ -45,14 +34,12 @@ def predict(isWroteTempData, model):
         new_dataset["Date"][i]=data['Date'][i]
         new_dataset["Close"][i]=data["Close"][i]
 
-
     new_dataset.index=new_dataset.Date
     new_dataset.drop("Date",axis=1,inplace=True)
 
     final_dataset=new_dataset.values
-
-    train_data=final_dataset[0:config.AMOUNT_OF_DATA,:]
-    valid_data=final_dataset[config.AMOUNT_OF_DATA:,:]
+    train_data=final_dataset[0:(len(final_dataset) - config.TIME_PREDICTION_NEXT - 1),:]
+    valid_data=final_dataset[(len(final_dataset) - config.TIME_PREDICTION_NEXT - 1):,:]
 
     scaler=MinMaxScaler(feature_range=(0,1))
     scaled_data=scaler.fit_transform(final_dataset)
@@ -84,7 +71,6 @@ def predict(isWroteTempData, model):
     inputs_data=inputs_data.reshape(-1,1)
     inputs_data=scaler.transform(inputs_data)
 
-
     X_test=[]
     for i in range(60,inputs_data.shape[0]):
         X_test.append(inputs_data[i-60:i,0])
@@ -93,13 +79,11 @@ def predict(isWroteTempData, model):
     X_test=np.reshape(X_test,(X_test.shape[0],X_test.shape[1],1))
     predicted_closing_price=pred_model.predict(X_test)
     predicted_closing_price=scaler.inverse_transform(predicted_closing_price)
-
-    train_data=new_dataset[:config.AMOUNT_OF_DATA]
-    valid_data=new_dataset[config.AMOUNT_OF_DATA:]
+    valid_data=new_dataset[(len(new_dataset)-config.TIME_PREDICTION_NEXT-1):]
     valid_data['Predictions']=predicted_closing_price
     new_valid_data=pd.DataFrame(index=range(0,len(valid_data)),columns=['Date','Predictions'])
     for i in range(0,len(valid_data)):
-        new_valid_data["Date"][i]=(data["Date"][i + config.AMOUNT_OF_DATA] - timedelta(hours=7)).timestamp()
+        new_valid_data["Date"][i]=(data["Date"][len(data) - config.TIME_PREDICTION_NEXT - 1 + i] - timedelta(hours=7)).timestamp()
         new_valid_data["Predictions"][i]=valid_data["Predictions"][i]
     
     return new_valid_data

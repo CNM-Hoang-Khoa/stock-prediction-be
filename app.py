@@ -84,7 +84,7 @@ def update():
    
     df.index=df['Date']
 
-    if type == config.PREDICTION_TYPES.LSTM:
+    if type == config.PREDICTION_TYPES.LSTM or type == config.PREDICTION_TYPES.RNN:
         print("RUN update predict with LSTM")
         return_value = stock_pred_lstm_rnn.predict(df, "Close", type)
         return_value_roc = stock_pred_lstm_rnn.predict(df, "Rate", type)

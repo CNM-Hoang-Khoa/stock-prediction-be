@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, flash, redirect, jsonify
 import config
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from binance.client import Client
 from binance.enums import *
 from flask_cors import CORS, cross_origin
@@ -30,7 +30,7 @@ def history():
             # "high": data[2], 
             # "low": data[3], 
             # "close": data[4],
-            "time": data[0]/1000,
+            "time": data[0]/1000 + timedelta(hours=7).total_seconds(),
             "value": data[4]
         }
         processed_candlesticks.append(candlestick)

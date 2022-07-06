@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, jsonify
+from flask import Flask, render_template, request, jsonify
 import config
 import pandas as pd
 from datetime import datetime, timedelta

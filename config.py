@@ -1,7 +1,6 @@
-API_KEY = 'yourbinanceapikey'
-API_SECRET = 'yourbinanceapisecret'
+API_KEY = 'mybinanceapikey'
+API_SECRET = 'mybinanceapisecret'
 
-AMOUNT_OF_DATA = 999
 INTERVAL_TIME = 3
 TIME_PREDICTION_NEXT = 1
 

@@ -2,8 +2,7 @@ import pandas as pd
 import numpy as np
 import config
 
-from regex import D
-from datetime import datetime, timedelta
+from datetime import timedelta
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize']=20,10
 
